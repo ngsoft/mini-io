@@ -1,0 +1,34 @@
+{
+    "name": "ngsoft/mini-io",
+    "description": "Format the CLI Output using an easy to use API",
+    "keywords": [
+        "stdio",
+        "stdin",
+        "stdout",
+        "cli",
+        "console",
+        "formatter",
+        "terminal"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Aymeric Anger",
+            "role": "Developer",
+            "homepage": "https://github.com/ngsoft"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require-dev": {},
+    "require": {
+        "php": ">=8.1",
+        "ngsoft/tools": "^4"
+    },
+    "autoload": {
+        "psr-4": {
+            "NGSOFT\\": "src/"
+        }
+    }
+}
