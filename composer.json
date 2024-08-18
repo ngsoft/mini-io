@@ -1,6 +1,7 @@
 {
   "name": "ngsoft/mini-io",
   "description": "Format the CLI Output using an easy to use API",
+  "version": "1.0.0",
   "keywords": [
     "stdio",
     "stdin",
@@ -8,7 +9,9 @@
     "cli",
     "console",
     "formatter",
-    "terminal"
+    "terminal",
+    "argv",
+    "getopt"
   ],
   "type": "library",
   "license": "MIT",
