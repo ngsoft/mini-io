@@ -14,44 +14,38 @@ class TagFormatter implements FormatterInterface
 
     public function format(string|\Stringable $message): string
     {
-        $message = (string) $message;
+        $message = (string)$message;
 
-        $colors  = Terminal::colorSupport() || Terminal::isColorForced();
+        $colors = Terminal::colorSupport() || Terminal::isColorForced();
 
-        while (preg_match('#<([^>]*)>#', $message, $matches, PREG_OFFSET_CAPTURE) > 0)
-        {
+        while (preg_match('#<([^>]*)>#', $message, $matches, PREG_OFFSET_CAPTURE) > 0) {
             /** @var int $offset */
-            $input   = $matches[0][0];
-            $labels  = $matches[1][0];
-            $len     = strlen($input);
+            $input = $matches[0][0];
+            $labels = $matches[1][0];
+            $len = strlen($input);
 
-            $offset  = $matches[0][1];
+            $offset = $matches[0][1];
             $this->buffer->write(substr($message, 0, $offset));
             $message = substr($message, $offset + $len);
 
-            if ( ! $colors)
-            {
+            if (!$colors) {
                 continue;
             }
 
-            $labels  = trim($labels);
+            $labels = trim($labels);
 
-            if ('/' === $labels)
-            {
+            if (str_starts_with($labels, "/")) {
                 $this->buffer->write(Ansi::RESET);
                 continue;
             }
 
-            if ('br' === $labels)
-            {
+            if ('br' === $labels) {
                 $this->buffer->write("\n");
                 continue;
             }
 
-            foreach (preg_split('#\h+#', $labels) as $label)
-            {
-                if ($style = $this->styleMap->getStyle($label))
-                {
+            foreach (preg_split('#\h+#', $labels) as $label) {
+                if ($style = $this->styleMap->getStyle($label)) {
                     $this->buffer->write($style->getAnsiString());
                 }
             }

@@ -10,7 +10,7 @@ class Output implements OutputInterface
 
     public function __construct(?FormatterInterface $formatter = null)
     {
-        $this->formatter ??= new NullFormatter();
+        $this->formatter = $formatter ?? new NullFormatter();
 
         if ( ! isset($this->stream))
         {
