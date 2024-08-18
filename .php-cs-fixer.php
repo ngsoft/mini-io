@@ -29,7 +29,7 @@ return (new \PhpCsFixer\Config())
                     'while',
                 ],
             ],
-            'declare_strict_types' => false,
+            'declare_strict_types' => true,
             'single_line_comment_style' => false,
             'no_extra_blank_lines' => [
                 'tokens' => [
@@ -69,6 +69,6 @@ return (new \PhpCsFixer\Config())
                 'format' => 'short',
                 'shorten_simple_statements_only' => true,
             ],
-            
+
         ]
     );

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NGSOFT\IO;
 
 class TagFormatter implements FormatterInterface
@@ -29,6 +31,12 @@ class TagFormatter implements FormatterInterface
             $this->buffer->write(substr($message, 0, $offset));
             $message = substr($message, $offset + $len);
 
+            if ('br' === $labels)
+            {
+                $this->buffer->write("\n");
+                continue;
+            }
+
             if ( ! $colors)
             {
                 continue;
@@ -39,12 +47,6 @@ class TagFormatter implements FormatterInterface
             if (str_starts_with($labels, '/'))
             {
                 $this->buffer->write(Ansi::RESET);
-                continue;
-            }
-
-            if ('br' === $labels)
-            {
-                $this->buffer->write("\n");
                 continue;
             }
 

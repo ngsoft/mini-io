@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NGSOFT\IO;
 
 use NGSOFT\DataStructure\Collection;
@@ -145,7 +147,7 @@ class GetOpt extends Collection
 
     protected function addArgument(int|string $name, mixed $value, bool $long): void
     {
-        if ( ! $long)
+        if ( ! $long && is_string($name))
         {
             $name = mb_str_split($name);
         }
@@ -159,6 +161,11 @@ class GetOpt extends Collection
         {
             if (is_string($key))
             {
+                if (is_numeric($key))
+                {
+                    $key = "#{$key}";
+                }
+
                 $this->counts[$key] ??= 0;
                 ++$this->counts[$key];
             }

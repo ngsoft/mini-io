@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NGSOFT;
 
 use NGSOFT\IO\Buffer;
@@ -15,7 +17,7 @@ use NGSOFT\IO\TagFormatter;
 
 class IO
 {
-    public const VERSION = '1.0.0';
+    public const VERSION = '1.0.1';
 
     protected Input $input;
     protected OutputInterface $output;
