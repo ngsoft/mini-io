@@ -114,7 +114,8 @@ return [
         'PhanRedefineClass',
         'PhanPluginPrintfIncompatibleArgumentType',
         'PhanTypeMismatchReturnNullable',
-        'PhanTypeArraySuspiciousNullable'
+        'PhanTypeArraySuspiciousNullable',
+        'PhanParamNameIndicatingUnusedInClosure'
 
     ],
     // If true, seemingly undeclared variables in the global

@@ -5,6 +5,7 @@ namespace NGSOFT;
 use NGSOFT\IO\Buffer;
 use NGSOFT\IO\ErrorOutput;
 use NGSOFT\IO\FormatterInterface;
+use NGSOFT\IO\GetOpt;
 use NGSOFT\IO\Input;
 use NGSOFT\IO\Output;
 use NGSOFT\IO\OutputInterface;
@@ -19,12 +20,10 @@ class IO
     protected Input $input;
     protected OutputInterface $output;
     protected OutputInterface $errorOutput;
-
     protected FormatterInterface $formatter;
-
     protected StyleMap $styleMap;
-
     protected Buffer $buffer;
+    protected GetOpt $argvParser;
 
     public function __construct()
     {
@@ -34,6 +33,7 @@ class IO
         $this->errorOutput = new ErrorOutput($this->formatter);
         $this->input       = new Input();
         $this->buffer      = new Buffer();
+        $this->argvParser  = new GetOpt();
     }
 
     /**
@@ -43,6 +43,18 @@ class IO
     {
         static $io = null;
         return $io ??= new static();
+    }
+
+    /**
+     * Parse CLI Arguments.
+     */
+    public function parseOpt(?array $arguments = null): GetOpt
+    {
+        if ( ! $arguments && ! $this->argvParser->isEmpty())
+        {
+            return $this->argvParser;
+        }
+        return $this->argvParser->parseArguments($arguments);
     }
 
     /**
@@ -223,6 +235,17 @@ class IO
     public function setFormatter(FormatterInterface $formatter): IO
     {
         $this->formatter = $formatter;
+        return $this;
+    }
+
+    public function getArgvParser(): GetOpt
+    {
+        return $this->argvParser;
+    }
+
+    public function setArgvParser(GetOpt $argvParser): IO
+    {
+        $this->argvParser = $argvParser;
         return $this;
     }
 }
