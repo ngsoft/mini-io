@@ -17,7 +17,7 @@ use NGSOFT\IO\TagFormatter;
 
 class IO
 {
-    public const VERSION = '1.0.1';
+    public const VERSION = '1.1.0';
 
     protected Input $input;
     protected OutputInterface $output;

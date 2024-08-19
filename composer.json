@@ -1,7 +1,7 @@
 {
   "name": "ngsoft/mini-io",
   "description": "Format the CLI Output using an easy to use API",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "keywords": [
     "stdio",
     "stdin",

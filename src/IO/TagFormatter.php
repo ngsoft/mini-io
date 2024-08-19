@@ -4,14 +4,40 @@ declare(strict_types=1);
 
 namespace NGSOFT\IO;
 
+use NGSOFT\DataStructure\Map;
+
 class TagFormatter implements FormatterInterface
 {
     protected Buffer $buffer;
+    /**
+     * @var Map<string,CustomTag>
+     */
+    protected Map $customTags;
 
     public function __construct(protected ?StyleMap $styleMap = null)
     {
         $this->styleMap ??= StyleMap::makeDefaultMap();
-        $this->buffer = new Buffer();
+        $this->buffer     = new Buffer();
+        $this->customTags = new Map();
+
+        foreach (CustomTag::createBuiltin() as $tag)
+        {
+            $this->addCustomTag($tag);
+        }
+    }
+
+    /**
+     * Add a custom tag independent of style.
+     */
+    public function addCustomTag(CustomTag $tag, ?string $label = null): static
+    {
+        $label ??= $tag->getName();
+
+        if ( ! $this->styleMap->hasStyle($label))
+        {
+            $this->customTags->add($label, $tag);
+        }
+        return $this;
     }
 
     public function format(string|\Stringable $message): string
@@ -30,10 +56,12 @@ class TagFormatter implements FormatterInterface
             $offset  = $matches[0][1];
             $this->buffer->write(substr($message, 0, $offset));
             $message = substr($message, $offset + $len);
+            $labels  = trim($labels);
 
-            if ('br' === $labels)
+            if ($this->customTags->has($labels))
             {
-                $this->buffer->write("\n");
+                // if tags are added
+                $message = strval($this->customTags->get($labels)) . $message;
                 continue;
             }
 
@@ -41,8 +69,6 @@ class TagFormatter implements FormatterInterface
             {
                 continue;
             }
-
-            $labels  = trim($labels);
 
             if (str_starts_with($labels, '/'))
             {

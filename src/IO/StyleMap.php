@@ -18,6 +18,10 @@ class StyleMap
         'bg:aqua'          => 'bg:cyan',
         'aqua:bright'      => 'cyan:bright',
         'bg:aqua:bright'   => 'bg:cyan:bright',
+        'em'               => 'italic',
+        'i'                => 'italic',
+        'strong'           => 'bold',
+        'b'                => 'bold',
     ];
     protected const CUSTOM   = [
         ['href', Color::Cyan, Format::Underline],
@@ -95,6 +99,11 @@ class StyleMap
         }
 
         return $map;
+    }
+
+    public function hasStyle(string $label): bool
+    {
+        return $this->styles->has($label);
     }
 
     public function addStyle(Style $style, ?string $label = null): static
