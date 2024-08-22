@@ -16,7 +16,7 @@ class GetOpt extends Collection
      */
     public function parseArguments(?array $arguments = null): static
     {
-        static $argToken = '#^(-{1,2})(\w.+)#', $equalsToken = '#^(.+)=(.+)$#', $reNegIntFloat = '#^-(?:[.,]?\d+|\d+[.,]\d+)$#';
+        static $argToken = '#^(-{1,2})(\w.*)#', $equalsToken = '#^(.+)=(.+)$#', $reNegIntFloat = '#^-(?:[.,]?\d+|\d+[.,]\d+)$#';
 
         $this->unlock();
         $this->clear();
