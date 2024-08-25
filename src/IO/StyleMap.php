@@ -26,6 +26,8 @@ class StyleMap implements \Countable, \IteratorAggregate, \ArrayAccess
         'bg:aqua:bright'   => 'bg:cyan:bright',
         'em'               => 'italic',
         'strong'           => 'bold',
+        's'                => 'strikethrough',
+        'u'                => 'underline',
     ];
     protected const CUSTOM   = [
         ['href', Color::Cyan, Format::Underline],
