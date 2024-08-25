@@ -12,7 +12,7 @@ class CustomTag implements \Stringable, \IteratorAggregate
     protected array $actions = [];
 
     public function __construct(
-        protected readonly string $name
+        protected string $name
     ) {}
 
     public function __toString(): string
@@ -23,7 +23,7 @@ class CustomTag implements \Stringable, \IteratorAggregate
         {
             if ( ! is_string($action))
             {
-                $action = $action();
+                $action = $action($this->name);
             }
 
             if (is_string($action))

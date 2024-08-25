@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace NGSOFT;
 
 use NGSOFT\IO\Buffer;
+use NGSOFT\IO\Cursor;
 use NGSOFT\IO\ErrorOutput;
 use NGSOFT\IO\FormatterInterface;
 use NGSOFT\IO\GetOpt;
@@ -28,6 +29,7 @@ class IO
     protected StyleMap $styleMap;
     protected Buffer $buffer;
     protected GetOpt $argvParser;
+    protected Cursor $cursor;
 
     public function __construct()
     {
@@ -38,6 +40,8 @@ class IO
         $this->input       = new Input();
         $this->buffer      = new Buffer();
         $this->argvParser  = new GetOpt();
+        $this->cursor      = new Cursor($this);
+        $this->cursor->addTagActions($this->formatter);
     }
 
     /**
@@ -251,5 +255,10 @@ class IO
     {
         $this->argvParser = $argvParser;
         return $this;
+    }
+
+    public function getCursor(): Cursor
+    {
+        return $this->cursor;
     }
 }

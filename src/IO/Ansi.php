@@ -52,12 +52,6 @@ interface Ansi
     public const SCROLL_DOWN      = self::CSI . '%uT';
 
     /**
-     * Save.
-     */
-    public const CURSOR_SAVE_POS  = self::CSI . 's';
-    public const CURSOR_LOAD_POS  = self::CSI . 'u';
-
-    /**
      * Visible.
      */
     public const CURSOR_HIDE      = self::CSI . '?25l';
