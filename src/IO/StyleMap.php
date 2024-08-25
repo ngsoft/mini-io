@@ -5,23 +5,27 @@ declare(strict_types=1);
 namespace NGSOFT\IO;
 
 use NGSOFT\DataStructure\Map;
+use NGSOFT\DataStructure\Set;
+use NGSOFT\DataStructure\Sort;
+use NGSOFT\Traits\ReversibleIteratorTrait;
 
-class StyleMap
+class StyleMap implements \Countable, \IteratorAggregate, \ArrayAccess
 {
+    use ReversibleIteratorTrait;
+
     protected const ALIASES  = [
-        'purple'           => 'magenta',
-        'bg:purple'        => 'bg:magenta',
-        'purple:bright'    => 'magenta:bright',
+
+        'magenta'          => 'purple',
+        'bg:magenta'       => 'bg:purple',
+        'magenta:bright'   => 'purple:bright',
         'bg:purple:bright' => 'bg:magenta:bright',
-        'gray:bright'      => 'white',
+        'white'            => 'gray:bright',
         'aqua'             => 'cyan',
         'bg:aqua'          => 'bg:cyan',
         'aqua:bright'      => 'cyan:bright',
         'bg:aqua:bright'   => 'bg:cyan:bright',
         'em'               => 'italic',
-        'i'                => 'italic',
         'strong'           => 'bold',
-        'b'                => 'bold',
     ];
     protected const CUSTOM   = [
         ['href', Color::Cyan, Format::Underline],
@@ -51,16 +55,26 @@ class StyleMap
 
     protected array $aliases = [];
 
+    protected Set $handlers;
+
     public function __construct()
     {
-        $this->styles = new Map();
+        $this->styles   = new Map();
+        $this->handlers = new Set();
+    }
+
+    public function __debugInfo(): array
+    {
+        return [
+            'styles' => $this->styles,
+        ];
     }
 
     public static function makeDefaultMap(): static
     {
-        static $map;
+        static $cache;
 
-        if ( ! $map)
+        if ( ! isset($cache))
         {
             $map          = new static();
 
@@ -96,9 +110,17 @@ class StyleMap
                 $label = array_shift($item);
                 $map->addStyle(Style::make(...$item), $label);
             }
+
+            // add rgb handler (creates colors on the fly
+            $map
+                ->addHandler([RgbColor::class, 'colorFilter'])
+                ->addHandler([Xterm256::class, 'colorFilter'])
+            ;
+
+            $cache        = $map;
         }
 
-        return $map;
+        return $cache;
     }
 
     public function hasStyle(string $label): bool
@@ -112,8 +134,15 @@ class StyleMap
 
         if ($label)
         {
-            $this->styles->set($label, $style);
+            $this->styles->add($label, $style);
         }
+        return $this;
+    }
+
+    public function addHandler(callable $handler): static
+    {
+        $this->handlers->add($handler);
+
         return $this;
     }
 
@@ -127,6 +156,67 @@ class StyleMap
     public function getStyle(string $label): ?Style
     {
         $label = $this->aliases[$label] ?? $label;
-        return $this->styles->get($label);
+        $value = $this->styles->get($label);
+
+        if ( ! $value)
+        {
+            foreach ($this->handlers as $handler)
+            {
+                $result = $handler($label);
+
+                if ($result instanceof CustomColorInterface)
+                {
+                    $this->addStyle($value = Style::make($result), $label);
+                    break;
+                }
+            }
+        }
+        return $value;
+    }
+
+    /**
+     * @return Style[]
+     */
+    public function getStyles(string ...$labels): array
+    {
+        $result = [];
+
+        foreach ($labels as $label)
+        {
+            if ($style = $this->getStyle($label))
+            {
+                $result[$label] = $style;
+            }
+        }
+
+        return $result;
+    }
+
+    public function offsetExists(mixed $offset): bool
+    {
+        return $this->styles->has($this->aliases[$offset] ?? $offset);
+    }
+
+    public function offsetGet(mixed $offset): ?Style
+    {
+        return $this->styles->get($this->aliases[$offset] ?? $offset);
+    }
+
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
+        if ($value instanceof Style)
+        {
+            $this->styles->set($this->aliases[$offset] ?? $offset, $value);
+        }
+    }
+
+    public function offsetUnset(mixed $offset): void
+    {
+        $this->styles->delete($this->aliases[$offset] ?? $offset);
+    }
+
+    public function entries(Sort $sort = Sort::ASC): iterable
+    {
+        yield from $this->styles->entries($sort);
     }
 }

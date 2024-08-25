@@ -30,7 +30,7 @@ class GetOpt extends Collection
 
         while (count($arguments))
         {
-            $arg = array_shift($arguments);
+            $arg     = array_shift($arguments);
 
             if (preg_test($reNegIntFloat, $arg))
             {
@@ -62,8 +62,9 @@ class GetOpt extends Collection
 
                 continue;
             }
-            // $arg is a value
-            $this->addArgument($current ?? ++$index, $arg, $long);
+
+            $this->addArgument($current, $arg, $long, ++$index);
+            $current = null;
         }
 
         $this->lock();
@@ -145,8 +146,10 @@ class GetOpt extends Collection
         return $this->counts[$name] ?? 0;
     }
 
-    protected function addArgument(int|string $name, mixed $value, bool $long): void
+    protected function addArgument(?string $name, mixed $value, bool $long, int $index = -1): void
     {
+        $name ??= [];
+
         if ( ! $long && is_string($name))
         {
             $name = mb_str_split($name);
@@ -159,17 +162,30 @@ class GetOpt extends Collection
 
         foreach ($name as $key)
         {
-            if (is_string($key))
+            if (is_numeric($key))
             {
-                if (is_numeric($key))
-                {
-                    $key = "#{$key}";
-                }
-
-                $this->counts[$key] ??= 0;
-                ++$this->counts[$key];
+                $key = "#{$key}";
             }
-            $this->append($key, $value);
+            $current = $this[$key];
+
+            if (null === $current)
+            {
+                $current = $value;
+            } elseif ( ! is_array($current))
+            {
+                $current = [$current, $value];
+            } else
+            {
+                $current[] = $value;
+            }
+            $this->counts[$key] ??= 0;
+            ++$this->counts[$key];
+            $this->append($key, $current);
+        }
+
+        if (-1 !== $index)
+        {
+            $this->append($index, $value);
         }
     }
 }

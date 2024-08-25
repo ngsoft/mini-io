@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace NGSOFT\IO;
 
-abstract class Terminal
+class Terminal
 {
     protected static bool $colorForced = false;
 

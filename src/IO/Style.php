@@ -14,19 +14,29 @@ class Style implements FormatterInterface, ReversibleIterator
     use ReversibleIteratorTrait;
 
     /**
-     * @var Set<int>
+     * @var Set<int|string>
      */
     protected Set $styles;
 
-    protected string $label     = '';
-    protected ?string $compiled = null;
+    protected string $label   = '';
+    protected ?string $prefix = null;
+
+    protected string $suffix  = Ansi::RESET;
 
     public function __construct()
     {
         $this->styles = new Set();
     }
 
-    public static function make(BackgroundColor|Color|Format|HighBackgroundColor|HighColor ...$styles): static
+    public function __debugInfo(): array
+    {
+        return [
+            'label'  => $this->label,
+            'styles' => $this->styles,
+        ];
+    }
+
+    public static function make(CustomColorInterface ...$styles): static
     {
         $style = new static();
 
@@ -37,12 +47,18 @@ class Style implements FormatterInterface, ReversibleIterator
         return $style;
     }
 
-    public function addStyle(BackgroundColor|Color|Format|HighBackgroundColor|HighColor $style): static
+    public function addStyle(CustomColorInterface $style): static
     {
-        $this->styles->add($style->value);
+        $this->styles->add($style->getValue());
         $this->label .= ' ' . $style->getLabel();
-        $this->label    = ltrim($this->label);
-        $this->compiled = null;
+        $this->label  = ltrim($this->label);
+        $this->prefix = null;
+        return $this;
+    }
+
+    public function setLabel(string $label): Style
+    {
+        $this->label = $label;
         return $this;
     }
 
@@ -55,21 +71,24 @@ class Style implements FormatterInterface, ReversibleIterator
     {
         if ($this->isColorSupported())
         {
-            return $this->compiled;
+            return $this->prefix;
         }
         return '';
+    }
+
+    public function getFormatString(): string
+    {
+        if ($this->isColorSupported())
+        {
+            return $this->prefix . '%s' . $this->suffix;
+        }
+        return '%s';
     }
 
     public function format(string|\Stringable $message): string
     {
         $message = (string) $message;
-
-        if ($this->isColorSupported())
-        {
-            return $this->compiled . $message . Ansi::RESET;
-        }
-
-        return $message;
+        return sprintf($this->getFormatString(), $message);
     }
 
     public function entries(Sort $sort = Sort::ASC): iterable
@@ -84,16 +103,16 @@ class Style implements FormatterInterface, ReversibleIterator
 
     protected function compile(): void
     {
-        if ($this->compiled)
+        if ($this->prefix)
         {
             return;
         }
 
-        $this->compiled = '';
+        $this->prefix = '';
 
-        foreach ($this->styles as $int)
+        foreach ($this->styles as $value)
         {
-            $this->compiled .= sprintf(Ansi::STYLE, "{$int}");
+            $this->prefix .= sprintf(Ansi::STYLE, "{$value}");
         }
     }
 

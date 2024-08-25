@@ -6,7 +6,7 @@ namespace NGSOFT\IO;
 
 use NGSOFT\Enums\EnumTrait;
 
-enum BackgroundColor: int
+enum BackgroundColor: int implements CustomColorInterface
 {
     use EnumTrait;
 

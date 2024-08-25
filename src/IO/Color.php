@@ -6,7 +6,7 @@ namespace NGSOFT\IO;
 
 use NGSOFT\Enums\EnumTrait;
 
-enum Color: int
+enum Color: int implements CustomColorInterface
 {
     use EnumTrait;
 
@@ -18,11 +18,6 @@ enum Color: int
     case Purple = 35;
     case Cyan   = 36;
     case Gray   = 37;
-
-    public function getBackgroundValue(): int
-    {
-        return $this->value + 10;
-    }
 
     public function getLabel(): string
     {

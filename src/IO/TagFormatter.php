@@ -26,6 +26,12 @@ class TagFormatter implements FormatterInterface
         }
     }
 
+    public function __clone(): void
+    {
+        $this->customTags = clone $this->customTags;
+        $this->buffer     = new Buffer();
+    }
+
     /**
      * Add a custom tag independent of style.
      */

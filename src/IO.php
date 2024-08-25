@@ -1,5 +1,7 @@
 <?php
 
+/** @noinspection PhpUnused */
+
 declare(strict_types=1);
 
 namespace NGSOFT;
@@ -17,7 +19,7 @@ use NGSOFT\IO\TagFormatter;
 
 class IO
 {
-    public const VERSION = '1.1.1';
+    public const VERSION = '1.2.0';
 
     protected Input $input;
     protected OutputInterface $output;
