@@ -6,6 +6,11 @@ namespace NGSOFT\IO;
 
 use NGSOFT\IO;
 
+/**
+ * @property int  $x
+ * @property int  $y
+ * @property bool $enabled
+ */
 class Cursor implements \Stringable, RendererInterface
 {
     protected const TAG_ACTIONS = [
@@ -29,11 +34,53 @@ class Cursor implements \Stringable, RendererInterface
         $this->io ??= IO::create();
         $this->buffer = new Buffer();
         $this->input  = $this->io->getInput();
+
+        // run isEnabled at(1,1)
+        if ('cli' === php_sapi_name())
+        {
+            $this->isEnabled();
+        }
     }
 
-    public function __invoke(string $action): string
+    public function __get(string $name)
     {
-        $method = self::TAG_ACTIONS[$action] ?? null;
+        return match ($name)
+        {
+            'x'       => $this->getX(),
+            'y'       => $this->getY(),
+            'enabled' => $this->isEnabled(),
+            default   => null
+        };
+    }
+
+    public function __isset(string $name): bool
+    {
+        return null !== $this->__get($name);
+    }
+
+    public function __set(string $name, $value): void
+    {
+        // noop
+    }
+
+    public function __unset(string $name): void
+    {
+        // noop
+    }
+
+    public function __debugInfo(): array
+    {
+        $pos = $this->getCursorPosition();
+        return [
+            'x'       => $pos->x,
+            'y'       => $pos->y,
+            'enabled' => $this->isEnabled(),
+        ];
+    }
+
+    public function __invoke(CustomTag $tag): string
+    {
+        $method = self::TAG_ACTIONS[$tag->getName()] ?? null;
 
         if ($method)
         {
@@ -62,6 +109,40 @@ class Cursor implements \Stringable, RendererInterface
     public function render(OutputInterface $output): void
     {
         $this->buffer->render($output);
+    }
+
+    public function isEnabled(): bool
+    {
+        static $result = null;
+
+        if ( ! isset($result))
+        {
+            $out      = $this->io->getOutput();
+            $w        = Terminal::getWidth();
+            $currentX = $this->getX();
+
+            do
+            {
+                $x = rand(5, $w - 1);
+            } while ($x === $currentX);
+
+            // move to col
+            $out->write(
+                Ansi::CURSOR_HIDE,
+                sprintf(Ansi::CURSOR_COL, $x)
+            );
+            // get new position
+            $pos      = $this->getCursorPosition();
+            // restore previous col
+            $out->write(
+                sprintf(Ansi::CURSOR_COL, $currentX),
+                Ansi::CURSOR_SHOW
+            );
+            // check if new position is expected value
+            $result   = $x === $pos->x;
+        }
+
+        return $result;
     }
 
     public function getCursorPosition(): CursorPosition
@@ -93,6 +174,28 @@ class Cursor implements \Stringable, RendererInterface
         }
 
         return new CursorPosition($x, $y);
+    }
+
+    public function save(): static
+    {
+        // printing escape sequence on unsupported term can print out a broken string
+        if ($this->isEnabled())
+        {
+            $this->buffer->write(Ansi::CURSOR_SAVE);
+        }
+
+        return $this;
+    }
+
+    public function load(): static
+    {
+        // printing escape sequence on unsupported term can print out a broken string
+        if ($this->isEnabled())
+        {
+            $this->buffer->write(Ansi::CURSOR_LOAD);
+        }
+
+        return $this;
     }
 
     public function getX(): int

@@ -30,6 +30,8 @@ interface Ansi
     public const CURSOR_PREV_LINE = self::CSI . '%uF';
     public const CURSOR_COL       = self::CSI . '%uG';
     public const CURSOR_POS       = self::CSI . '%u;%uH';
+    public const CURSOR_SAVE      = self::ESC . '7';
+    public const CURSOR_LOAD      = self::ESC . '8';
 
     /**
      * Erase Screen.

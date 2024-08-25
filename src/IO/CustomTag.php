@@ -4,40 +4,67 @@ declare(strict_types=1);
 
 namespace NGSOFT\IO;
 
-class CustomTag implements \Stringable, \IteratorAggregate
+/** @phan-file-suppress PhanInvalidFQSENInCallable */
+class CustomTag implements FormatterInterface
 {
     /**
      * @var callable[]|string[]
      */
-    protected array $actions = [];
+    protected array $actions      = [];
+
+    /**
+     * @var string[]
+     */
+    protected array $attributes   = [];
+
+    protected bool $supportsColor = true;
 
     public function __construct(
-        protected string $name
+        protected string $name,
+        protected bool $usesContents = false
     ) {}
 
-    public function __toString(): string
+    public function __debugInfo(): array
     {
-        $result = '';
-
-        foreach ($this->actions as $action)
-        {
-            if ( ! is_string($action))
-            {
-                $action = $action($this->name);
-            }
-
-            if (is_string($action))
-            {
-                $result .= $action;
-            }
-        }
-
-        return $result;
+        return [
+            'name'          => $this->name,
+            'attributes'    => $this->attributes,
+            'usesContents'  => $this->usesContents,
+            'supportsColor' => $this->supportsColor,
+            'actions'       => $this->actions,
+        ];
     }
 
-    public static function createNew(string $name, null|callable|string $action = null): static
+    public function supportsColor(): bool
     {
-        $i = new static($name);
+        return $this->supportsColor;
+    }
+
+    public function setSupportsColor(bool $supportsColor): CustomTag
+    {
+        $this->supportsColor = $supportsColor;
+        return $this;
+    }
+
+    public function getAttributes(): array
+    {
+        return $this->attributes;
+    }
+
+    public function setAttributes(array $attributes): CustomTag
+    {
+        $this->attributes = $attributes;
+        return $this;
+    }
+
+    public function usesContents(): bool
+    {
+        return $this->usesContents;
+    }
+
+    public static function createNew(string $name, null|callable|string $action = null, bool $usesContents = false): static
+    {
+        $i = new static($name, $usesContents);
 
         if ($action)
         {
@@ -51,8 +78,8 @@ class CustomTag implements \Stringable, \IteratorAggregate
         static $builtin;
 
         return $builtin ??= [
-            self::createNew('br', fn () => "\n"),
-            self::createNew('tab', fn () => '    '),
+            self::createNew('br', "\n"),
+            self::createNew('tab', '    '),
             self::createNew('hr', function ()
             {
                 $w = Terminal::getWidth() - 1;
@@ -77,8 +104,22 @@ class CustomTag implements \Stringable, \IteratorAggregate
         return $this->name;
     }
 
-    public function getIterator(): \Traversable
+    public function format(string|\Stringable $message): string
     {
-        yield from $this->actions;
+        $result = '';
+
+        foreach ($this->actions as $action)
+        {
+            if ( ! is_string($action))
+            {
+                $action = $action($this, str_val($message));
+            }
+
+            if (is_string($action))
+            {
+                $result .= $action;
+            }
+        }
+        return $result;
     }
 }
