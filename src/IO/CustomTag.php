@@ -5,19 +5,21 @@ declare(strict_types=1);
 namespace NGSOFT\IO;
 
 /** @phan-file-suppress PhanInvalidFQSENInCallable */
-class CustomTag implements FormatterInterface
+class CustomTag implements FormatterInterface, \IteratorAggregate
 {
     /**
      * @var callable[]|string[]
      */
-    protected array $actions      = [];
+    protected array $actions           = [];
 
     /**
      * @var string[]
      */
-    protected array $attributes   = [];
+    protected array $attributes        = [];
 
-    protected bool $supportsColor = true;
+    protected array $decodedAttributes = [];
+
+    protected bool $supportsColor      = true;
 
     public function __construct(
         protected string $name,
@@ -51,9 +53,40 @@ class CustomTag implements FormatterInterface
         return $this->attributes;
     }
 
+    public function getAttribute(string $name, mixed $defaultValue = null): mixed
+    {
+        if ( ! isset($this->decodedAttributes[$name]))
+        {
+            return value($defaultValue, $this);
+        }
+        return $this->decodedAttributes[$name];
+    }
+
     public function setAttributes(array $attributes): CustomTag
     {
-        $this->attributes = $attributes;
+        $this->attributes        = $attributes;
+
+        $this->decodedAttributes = [];
+
+        foreach ($attributes as $attr)
+        {
+            if ( ! preg_match('#^(.+)=(.+)$#', $attr, $matches))
+            {
+                $this->decodedAttributes[$attr] = '';
+                continue;
+            }
+            list(, $name, $str)             = $matches;
+            $value                          = $str;
+
+            try
+            {
+                $value = json_decode($str, true, JSON_THROW_ON_ERROR);
+            } catch (\JsonException)
+            {
+            }
+            $this->decodedAttributes[$name] = $value;
+        }
+
         return $this;
     }
 
@@ -80,13 +113,30 @@ class CustomTag implements FormatterInterface
         return $builtin ??= [
             self::createNew('br', "\n"),
             self::createNew('tab', '    '),
-            self::createNew('hr', function ()
+            self::createNew('hr', function (CustomTag $t)
             {
-                $w = Terminal::getWidth() - 1;
+                $w = Terminal::getWidth() - 2;
 
                 if ($w > 0)
                 {
-                    return sprintf("\n%s\n", str_repeat('=', $w));
+                    $str   = ' ' . str_repeat('=', $w);
+                    $extra = [];
+
+                    foreach ($t as $k => $v)
+                    {
+                        if ('' === $v && 'hr' !== $k)
+                        {
+                            $extra[] = $k;
+                        }
+                    }
+                    $extra = implode(' ', $extra);
+
+                    if ( ! empty($extra))
+                    {
+                        $str = "<{$extra}>{$str}</>";
+                    }
+
+                    return "\n{$str}\n";
                 }
                 return "\n\n";
             }),
@@ -121,5 +171,10 @@ class CustomTag implements FormatterInterface
             }
         }
         return $result;
+    }
+
+    public function getIterator(): \Traversable
+    {
+        yield from $this->decodedAttributes;
     }
 }
