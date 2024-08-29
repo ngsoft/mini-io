@@ -17,11 +17,10 @@ class TagFormatter implements FormatterInterface
     public function __construct(protected ?StyleMap $styleMap = null)
     {
         $this->styleMap ??= StyleMap::makeDefaultMap();
-        $this->buffer     = new Buffer();
+        $this->buffer = new Buffer();
         $this->customTags = new Map();
 
-        foreach (CustomTag::createBuiltin() as $tag)
-        {
+        foreach (CustomTag::createBuiltin() as $tag) {
             $this->addCustomTag($tag);
         }
     }
@@ -29,7 +28,7 @@ class TagFormatter implements FormatterInterface
     public function __clone(): void
     {
         $this->customTags = clone $this->customTags;
-        $this->buffer     = new Buffer();
+        $this->buffer = new Buffer();
     }
 
     /**
@@ -39,8 +38,7 @@ class TagFormatter implements FormatterInterface
     {
         $label ??= $tag->getName();
 
-        if ( ! $this->styleMap->hasStyle($label))
-        {
+        if (!$this->styleMap->hasStyle($label)) {
             $this->customTags->add($label, $tag);
         }
         return $this;
@@ -48,81 +46,73 @@ class TagFormatter implements FormatterInterface
 
     public function format(string|\Stringable $message): string
     {
-        static $pattern = '#<([^>]*)>#';
+        static $pattern = '#<([^>]*)>#', $patternC = '#<(/[^>]*)>#';
 
-        $message        = (string) $message;
+        $message = (string)$message;
 
-        $colors         = Terminal::colorSupport() || Terminal::isColorForced();
+        $colors = Terminal::colorSupport() || Terminal::isColorForced();
 
         // fix escaped tags
-        $message        = str_replace(['\<', '\>'], ['&lt;', '&gt;'], $message);
+        $message = str_replace(['\<', '\>'], ['&lt;', '&gt;'], $message);
 
-        while (preg_match($pattern, $message, $matches, PREG_OFFSET_CAPTURE) > 0)
-        {
-            $input      = $matches[0][0];
-            $labels     = $matches[1][0];
-            $len        = strlen($input);
+        while (preg_match($pattern, $message, $matches, PREG_OFFSET_CAPTURE) > 0) {
+            $input = $matches[0][0];
+            $labels = $matches[1][0];
+            $len = strlen($input);
 
-            $offset     = (int) $matches[0][1];
+            $offset = (int)$matches[0][1];
             $this->buffer->write(substr($message, 0, $offset));
-            $message    = substr($message, $offset + $len);
+            $message = substr($message, $offset + $len);
 
-            if (str_starts_with($labels, '/'))
-            {
-                if ($colors)
-                {
+            if (str_starts_with($labels, '/')) {
+                if ($colors) {
                     $this->buffer->write(Ansi::RESET);
                 }
                 continue;
             }
 
             $attributes = preg_split('#\h+#', trim($labels));
-            $buffer     = [];
+            $buffer = [];
 
-            foreach ($attributes as $attribute)
-            {
+            foreach ($attributes as $attribute) {
                 /** @var CustomTag $plugin */
-                if ($plugin = $this->customTags->get($attribute))
-                {
+                if ($plugin = $this->customTags->get($attribute)) {
                     $contents = '';
-                    $buffer   = null;
+                    $buffer = null;
                     $plugin->setAttributes($attributes)->setSupportsColor($colors);
 
                     if (
                         $plugin->usesContents()
-                        && preg_match($pattern, $message, $matches, PREG_OFFSET_CAPTURE)
+                        && preg_match($patternC, $message, $matches, PREG_OFFSET_CAPTURE)
                         && str_starts_with(trim($matches[1][0]), '/')
                     ) {
-                        $len      = strlen($matches[0][0]);
-                        $offset   = (int) $matches[0][1];
+                        $len = strlen($matches[0][0]);
+                        $offset = (int)$matches[0][1];
                         $contents = substr($message, 0, $offset);
-                        $message  = substr($message, $offset + $len);
+                        $message = substr($message, $offset + $len);
                     }
 
-                    $str      = str_val($plugin->format($contents));
+                    $str = str_val($plugin->format($contents));
                     $plugin->setAttributes([]);
 
-                    $message  = $str . $message;
+                    $message = $str . $message;
                     break;
                 }
 
-                if ($colors && $style = $this->styleMap->getStyle($attribute))
-                {
+                if ($colors && $style = $this->styleMap->getStyle($attribute)) {
                     $buffer[] = $style->getAnsiString();
                 }
             }
 
-            if ($buffer)
-            {
+            if ($buffer) {
                 $this->buffer->write(...$buffer);
             }
         }
 
-        $cnt            = count($this->buffer);
-        $message        = $this->buffer->pullString() . $message;
+        $cnt = count($this->buffer);
+        $message = $this->buffer->pullString() . $message;
 
-        if ($cnt && $colors)
-        {
+        if ($cnt && $colors) {
             $message .= Ansi::RESET;
         }
 
