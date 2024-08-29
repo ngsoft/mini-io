@@ -46,7 +46,7 @@ class TagFormatter implements FormatterInterface
 
     public function format(string|\Stringable $message): string
     {
-        static $pattern = '#<([^>]*)>#', $patternC = '#<(/[^>]*)>#';
+        static $pattern = '#<([^>]*)>#';
 
         $message = (string)$message;
 
@@ -83,7 +83,7 @@ class TagFormatter implements FormatterInterface
 
                     if (
                         $plugin->usesContents()
-                        && preg_match($patternC, $message, $matches, PREG_OFFSET_CAPTURE)
+                        && preg_match($pattern, $message, $matches, PREG_OFFSET_CAPTURE)
                         && str_starts_with(trim($matches[1][0]), '/')
                     ) {
                         $len = strlen($matches[0][0]);
