@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace NGSOFT\IO;
 
+use NGSOFT\DataStructure\Map;
 use NGSOFT\DataStructure\ReversibleIterator;
-use NGSOFT\DataStructure\Set;
 use NGSOFT\DataStructure\Sort;
 use NGSOFT\Traits\ReversibleIteratorTrait;
 
@@ -14,9 +14,9 @@ class Style implements FormatterInterface, ReversibleIterator
     use ReversibleIteratorTrait;
 
     /**
-     * @var Set<int|string>
+     * @var Map<CustomColorInterface,int|string>
      */
-    protected Set $styles;
+    protected Map $styles;
 
     protected string $label   = '';
     protected ?string $prefix = null;
@@ -25,7 +25,7 @@ class Style implements FormatterInterface, ReversibleIterator
 
     public function __construct()
     {
-        $this->styles = new Set();
+        $this->styles = new Map();
     }
 
     public function __debugInfo(): array
@@ -49,7 +49,7 @@ class Style implements FormatterInterface, ReversibleIterator
 
     public function addStyle(CustomColorInterface $style): static
     {
-        $this->styles->add($style->getValue());
+        $this->styles->add($style, $style->getValue());
         $this->label .= ' ' . $style->getLabel();
         $this->label  = ltrim($this->label);
         $this->prefix = null;
