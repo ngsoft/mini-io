@@ -75,16 +75,16 @@ class CustomTag implements FormatterInterface, \IteratorAggregate
                 $this->decodedAttributes[$attr] = '';
                 continue;
             }
-            list(, $name, $str)             = $matches;
-            $value                          = $str;
+            list(, $name, $str) = $matches;
+            $value              = trim($str, "'`\"");
 
             try
             {
-                $value = json_decode($str, true, JSON_THROW_ON_ERROR);
+                $this->decodedAttributes[$name] = json_decode($value, true, flags: JSON_THROW_ON_ERROR);
             } catch (\JsonException)
             {
+                $this->decodedAttributes[$name] = $value;
             }
-            $this->decodedAttributes[$name] = $value;
         }
 
         return $this;
