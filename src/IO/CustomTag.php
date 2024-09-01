@@ -119,7 +119,7 @@ class CustomTag implements FormatterInterface, \IteratorAggregate
 
             if ( ! preg_match('#^(.+)=(.+)$#', $attr, $matches))
             {
-                $this->decodedStyles[]          = $attr;
+                $this->decodedStyles[$attr]     = $attr;
                 $this->decodedAttributes[$attr] = true;
                 continue;
             }
@@ -136,6 +136,11 @@ class CustomTag implements FormatterInterface, \IteratorAggregate
         }
 
         return $this;
+    }
+
+    public function getDecodedStyles(): array
+    {
+        return $this->decodedStyles;
     }
 
     public function usesContents(): bool
@@ -163,38 +168,52 @@ class CustomTag implements FormatterInterface, \IteratorAggregate
             self::createNew('tab', '    '),
             self::createNew('hr', function (CustomTag $t)
             {
-                $w = $t->getAttribute(['length', 'len', 'width']);
+                $w          = $t->getAttribute(['length', 'len', 'width']);
+                $hasPadding = true;
+                $padding    = $t->getAttribute('padding');
+
+                if ( ! is_int($padding))
+                {
+                    $padding    = 1;
+                    $hasPadding = false;
+                }
+                $padding    = max(0, $padding);
+
+                $max        = Terminal::getWidth() - ($padding * 2);
 
                 if (is_int($w))
                 {
                     $w = max($w, 0);
                 } else
                 {
-                    $w = Terminal::getWidth() - 2;
+                    $w = $max;
                 }
+
+                $w          = min($w, $max);
+
+                if ($w < $max && ! $hasPadding)
+                {
+                    $padding = (int) ceil(($max - $w) / 2);
+                }
+
+                $str        = '';
 
                 if ($w > 0)
                 {
-                    $str   = ' ' . str_repeat('=', $w);
-                    $extra = [];
-
-                    foreach ($t as $k => $v)
-                    {
-                        if ('' === $v && 'hr' !== $k)
-                        {
-                            $extra[] = $k;
-                        }
-                    }
-                    $extra = implode(' ', $extra);
+                    $str   = str_repeat('=', $w);
+                    $extra = implode(' ', $t->getDecodedStyles());
 
                     if ( ! empty($extra))
                     {
                         $str = "<{$extra}>{$str}</>";
                     }
 
-                    return "\n{$str}\n";
+                    if ($padding)
+                    {
+                        $str = str_repeat(' ', $padding) . $str;
+                    }
                 }
-                return "\n\n";
+                return "\n{$str}\n";
             }),
         ];
     }
