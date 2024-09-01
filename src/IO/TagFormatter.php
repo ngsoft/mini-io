@@ -76,7 +76,7 @@ class TagFormatter implements FormatterInterface
                 continue;
             }
 
-            $attributes = preg_split('#\h+#', trim($labels));
+            $attributes = $this->parseAttributes(trim($labels));
             $buffer     = [];
 
             foreach ($attributes as $attribute)
@@ -127,5 +127,23 @@ class TagFormatter implements FormatterInterface
         }
 
         return str_replace(['&gt;', '&lt;'], ['>', '<'], $message);
+    }
+
+    protected function parseAttributes(string $str): array
+    {
+        static $re = "#([^= ]+)(?:=(?:[\"']([^\"']+)[\"']|[^ ]+|)|)#";
+        $result    = [];
+
+        /* @var int $offset */
+        while (preg_match($re, $str, $matches, PREG_OFFSET_CAPTURE))
+        {
+            $attr     = $matches[0][0];
+            $offset   = $matches[0][1];
+            $len      = strlen($attr);
+            $pos      = $offset + $len;
+            $str      = substr($str, $pos);
+            $result[] = $attr;
+        }
+        return $result;
     }
 }

@@ -19,6 +19,8 @@ class CustomTag implements FormatterInterface, \IteratorAggregate
 
     protected array $decodedAttributes = [];
 
+    protected array $decodedStyles     = [];
+
     protected bool $supportsColor      = true;
 
     public function __construct(
@@ -29,11 +31,13 @@ class CustomTag implements FormatterInterface, \IteratorAggregate
     public function __debugInfo(): array
     {
         return [
-            'name'          => $this->name,
-            'attributes'    => $this->attributes,
-            'usesContents'  => $this->usesContents,
-            'supportsColor' => $this->supportsColor,
-            'actions'       => $this->actions,
+            'name'              => $this->name,
+            'attributes'        => $this->attributes,
+            'decodedAttributes' => $this->decodedAttributes,
+            'decodedStyles'     => $this->decodedStyles,
+            'usesContents'      => $this->usesContents,
+            'supportsColor'     => $this->supportsColor,
+            'actions'           => $this->actions,
         ];
     }
 
@@ -53,13 +57,49 @@ class CustomTag implements FormatterInterface, \IteratorAggregate
         return $this->attributes;
     }
 
-    public function getAttribute(string $name, mixed $defaultValue = null): mixed
+    public function getAttribute(iterable|string $alternatives, mixed $defaultValue = null): mixed
     {
-        if ( ! isset($this->decodedAttributes[$name]))
+        $name = null;
+
+        if ( ! is_iterable($alternatives))
+        {
+            $alternatives = [$alternatives];
+        }
+
+        foreach ($alternatives as $alternative)
+        {
+            if (isset($this->decodedAttributes[$alternative]))
+            {
+                $name = $alternative;
+                break;
+            }
+        }
+
+        if ( ! isset($name))
         {
             return value($defaultValue, $this);
         }
         return $this->decodedAttributes[$name];
+    }
+
+    public function getStyle(StyleMap $styleMap): ?Style
+    {
+        $result = null;
+        $merged = new Style();
+
+        foreach ($this->decodedStyles as $attr)
+        {
+            if ($style = $styleMap->getStyle($attr))
+            {
+                /** @var CustomColorInterface $color */
+                foreach ($style->getStyles() as $color)
+                {
+                    $merged->addStyle($color);
+                    $result ??= $merged;
+                }
+            }
+        }
+        return $result;
     }
 
     public function setAttributes(array $attributes): CustomTag
@@ -68,15 +108,23 @@ class CustomTag implements FormatterInterface, \IteratorAggregate
 
         $this->decodedAttributes = [];
 
+        $this->decodedStyles     = [];
+
         foreach ($attributes as $attr)
         {
+            if ($attr === $this->name)
+            {
+                continue;
+            }
+
             if ( ! preg_match('#^(.+)=(.+)$#', $attr, $matches))
             {
-                $this->decodedAttributes[$attr] = '';
+                $this->decodedStyles[]          = $attr;
+                $this->decodedAttributes[$attr] = true;
                 continue;
             }
             list(, $name, $str) = $matches;
-            $value              = trim($str, "'`\"");
+            $value              = trim($str, "'\"");
 
             try
             {
@@ -115,7 +163,15 @@ class CustomTag implements FormatterInterface, \IteratorAggregate
             self::createNew('tab', '    '),
             self::createNew('hr', function (CustomTag $t)
             {
-                $w = Terminal::getWidth() - 2;
+                $w = $t->getAttribute(['length', 'len', 'width']);
+
+                if (is_int($w))
+                {
+                    $w = max($w, 0);
+                } else
+                {
+                    $w = Terminal::getWidth() - 2;
+                }
 
                 if ($w > 0)
                 {

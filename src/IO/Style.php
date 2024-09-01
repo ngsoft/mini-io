@@ -33,6 +33,7 @@ class Style implements FormatterInterface, ReversibleIterator
         return [
             'label'  => $this->label,
             'styles' => $this->styles,
+            'format' => $this->format('format'),
         ];
     }
 
@@ -54,6 +55,14 @@ class Style implements FormatterInterface, ReversibleIterator
         $this->label  = ltrim($this->label);
         $this->prefix = null;
         return $this;
+    }
+
+    /**
+     * @return \Traversable<CustomColorInterface>
+     */
+    public function getStyles(Sort $sort = Sort::ASC): iterable
+    {
+        yield from $this->styles->keys($sort);
     }
 
     public function setLabel(string $label): Style
