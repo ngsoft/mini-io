@@ -13,7 +13,7 @@ class Input
 
     public function __construct()
     {
-        $this->stream = fopen('php://input', 'r+');
+        $this->stream = fopen('php://stdin', 'r+');
     }
 
     public function __destruct()
